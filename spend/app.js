@@ -17,6 +17,7 @@
     app: $('app'),
     modal: $('currencyModal'),
     modalNote: $('modalNote'),
+    modalClose: $('modalClose'),
     todayTotal: $('todayTotal'),
     todayCount: $('todayCount'),
     weekTotal: $('weekTotal'),
@@ -55,7 +56,11 @@
   }
 
   function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.warn('localStorage save failed (private mode?):', e);
+    }
   }
 
   function isValidEntry(e) {
@@ -252,6 +257,8 @@
     els.modalNote.textContent = isChange
       ? 'Existing entries keep their numeric value — no FX conversion.'
       : 'You can change this later.';
+    // Close button only available when a currency is already set
+    if (isChange) showEl(els.modalClose); else hideEl(els.modalClose);
     showEl(els.modal);
   }
   function hideCurrencyModal() {
@@ -260,12 +267,17 @@
 
   function pickCurrency(code) {
     if (!CURRENCY_META[code]) return;
-    state.currency = code;
-    save();
-    buildFormatter();
+    // Hide modal FIRST so UI updates even if anything below throws.
     hideCurrencyModal();
     showEl(els.app);
-    render();
+    state.currency = code;
+    try {
+      buildFormatter();
+      render();
+    } catch (e) {
+      console.error('render after currency pick failed:', e);
+    }
+    save();
     els.amountInput.focus();
   }
 
@@ -337,6 +349,11 @@
       btn.addEventListener('click', () => pickCurrency(btn.dataset.currency));
     });
     els.changeCurrencyBtn.addEventListener('click', () => showCurrencyModal(true));
+    els.modalClose.addEventListener('click', hideCurrencyModal);
+    // Tap on backdrop (outside the white card) dismisses, but only if a currency is set
+    els.modal.addEventListener('click', (e) => {
+      if (e.target === els.modal && state.currency) hideCurrencyModal();
+    });
 
     // Export / Import
     els.exportBtn.addEventListener('click', exportData);
