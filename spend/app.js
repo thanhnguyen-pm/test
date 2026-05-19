@@ -245,14 +245,17 @@
   }
 
   // ---------- Currency modal ----------
+  function showEl(el) { el.hidden = false; el.style.display = ''; }
+  function hideEl(el) { el.hidden = true; el.style.display = 'none'; }
+
   function showCurrencyModal(isChange) {
     els.modalNote.textContent = isChange
       ? 'Existing entries keep their numeric value — no FX conversion.'
       : 'You can change this later.';
-    els.modal.hidden = false;
+    showEl(els.modal);
   }
   function hideCurrencyModal() {
-    els.modal.hidden = true;
+    hideEl(els.modal);
   }
 
   function pickCurrency(code) {
@@ -261,7 +264,7 @@
     save();
     buildFormatter();
     hideCurrencyModal();
-    els.app.hidden = false;
+    showEl(els.app);
     render();
     els.amountInput.focus();
   }
@@ -349,7 +352,7 @@
       showCurrencyModal(false);
     } else {
       buildFormatter();
-      els.app.hidden = false;
+      showEl(els.app);
       render();
       els.amountInput.focus();
     }
